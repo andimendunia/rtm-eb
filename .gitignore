@@ -3,3 +3,4 @@
 
 # But exclude the rtm.emtp file
 !/rtm.emtp
+!/main-a.emtp
