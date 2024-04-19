@@ -1,0 +1,19 @@
+﻿macro_definition_begin
+    "id": "3"
+    "name": "set default"
+    "startup": "false"
+    "periodic": [ "false" ]
+    "interlock": [ "false" ]
+macro_definition_end
+
+macro_command main()
+
+short interval = 15
+short ratio = 1000
+short limit = 150
+
+SetData(interval, "Local HMI", RW, 50, 1)
+SetData(ratio, "Local HMI", RW, 51, 1)
+SetData(limit, "Local HMI", RW, 52, 1)
+
+end macro_command

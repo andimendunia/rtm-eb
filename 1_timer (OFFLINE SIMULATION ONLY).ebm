@@ -1,0 +1,16 @@
+﻿macro_definition_begin
+    "id": "1"
+    "name": "timer (OFFLINE SIMULATION ONLY)"
+    "startup": "false"
+    "periodic": [ "false" ]
+    "interlock": [ "false" ]
+macro_definition_end
+
+macro_command main()
+int counter = 0
+
+GetData(counter, "OMRON CJ/CS/CP", W_BCD, 6, 1)
+counter = counter + 1
+SetData(counter, "OMRON CJ/CS/CP", W_BCD, 6, 1)
+
+end macro_command

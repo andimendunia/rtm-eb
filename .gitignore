@@ -2,5 +2,9 @@
 /*
 
 # But exclude the rtm.emtp file
-!/rtm.emtp
 !/main-a.emtp
+!/0_main.ebm
+!/1_timer (OFFLINE SIMULATION ONLY).ebm
+!/2_timer reset.ebm
+!/3_set default.ebm
+!/bahasa.lbl

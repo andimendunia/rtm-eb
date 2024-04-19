@@ -1,0 +1,203 @@
+﻿macro_definition_begin
+    "id": "0"
+    "name": "main"
+    "startup": "true"
+    "periodic": [ "false" ]
+    "interlock": [ "false" ]
+macro_definition_end
+sub execKiri(unsigned int tipKi, unsigned int tebKi, bool isTrue, bool isFalse)
+	SetData(tipKi, "OMRON CJ/CS/CP", W, 0, 1)
+	SetData(tebKi, "OMRON CJ/CS/CP", W, 1, 1)
+	SetData(isTrue, "OMRON CJ/CS/CP", H_Bit, 000, 1)
+	SetData(isFalse, "OMRON CJ/CS/CP", H_Bit, 000, 1)
+end sub
+
+sub execKanan(unsigned int tipKa, unsigned int tebKa, bool isTrue, bool isFalse)
+	SetData(tipKa, "OMRON CJ/CS/CP", W, 2, 1)
+	SetData(tebKa, "OMRON CJ/CS/CP", W, 3, 1)
+	SetData(isTrue, "OMRON CJ/CS/CP", H_Bit, 000, 1)
+	SetData(isFalse, "OMRON CJ/CS/CP", H_Bit, 000, 1)
+end sub
+
+macro_command main()
+
+// sampling harus cocok dengan jumlah isi array datKi dan datKa
+short sampling = 5, datKi[5], datKa[5]
+short pointer = 1, medKi = 0, medKa = 0
+short pointKi = 0, pointKa = 0, valKi = 0, valKa = 0, limit = 600 
+short isAutoCorrectOn = 0, autoInterval = 0
+short existCount = 0, existSampling = 10
+short stdMid = 0, stdMin = 0, stdMax = 0, corrRatio = 0
+short warnMin = 0, warnMax = 0
+unsigned int corrKi = 0, corrKa = 0, timeKi = 0, timeKa = 0
+unsigned int tebKi = 0, tebKa = 0, tipKi = 0, tipKa = 0
+bool isKiPos = 0, isKaPos = 0, isTrue = 1, isFalse = 0, isRangeSkipped = 0
+unsigned int timer = 0
+short autoLimit = 0
+bool isTipKi = 0, isTipKa = 0, isTebKi = 0, isTebKa = 0
+
+existCount = existSampling
+SetData(existCount, "Local HMI", LW, 71, 1)
+
+while true
+
+	// Pindahkan pointer
+	GetData(pointer, "Local HMI", LW, 70, 1)
+	if pointer >= sampling then
+		pointer = 1
+	else
+		pointer = pointer + 1
+	end if
+	SetData(pointer, "Local HMI", LW, 70, 1)
+	
+	// Deklarasi alamat berdasarkan pointer
+	pointKi = 100 + pointer
+	pointKa = 200 + pointer
+	
+	// Ambil data dari sensor. Jangan lupa tipe data BCD jika ambil dari PLC
+	GetData(valKi, "OMRON CJ/CS/CP", D_BCD, 410, 1)
+	GetData(valKa, "OMRON CJ/CS/CP", D_BCD, 420, 1)
+	
+	// Validasi. jika lebih dari limit, anggap nol
+	if(valKi > limit) then 
+		valKi = 0 
+	end if
+	if(valKa > limit) then 
+		valKa = 0 
+	end if
+	
+	// Simpan value berdasarkan alamat pointer
+	SetData(valKi, "Local HMI", LW, pointKi, 1)
+	SetData(valKa, "Local HMI", LW, pointKa, 1)
+	
+	// Hitung median
+	GetData(datKi[0], "Local HMI", LW, 100, sampling)
+	GetData(datKa[0], "Local HMI", LW, 200, sampling)
+	MEDIAN(datKi[0], medKi, sampling)
+	MEDIAN(datKa[0], medKa, sampling)
+	SetData(medKi, "Local HMI", LW, 10, 1)
+	SetData(medKa, "Local HMI", LW, 20, 1)
+	
+	// Matikan mode auto jika tidak ada data
+	GetData(isAutoCorrectOn, "OMRON CJ/CS/CP", H_Bit, 10000,1)
+	if medKi == 0 and medKa == 0 and isAutoCorrectOn == 1 then
+		GetData(existCount, "Local HMI", LW, 71, 1)
+		existCount = existCount - 1
+		if existCount < 0 then
+			SetData(isFalse, "OMRON CJ/CS/CP", H_Bit, 10000,1)
+			existCount = existSampling
+		end if		
+	else
+		existCount = existSampling
+	end if	
+	SetData(existCount, "Local HMI", LW, 71, 1)
+	
+	// Ambil parameter
+	GetData(timer, "OMRON CJ/CS/CP", W_BCD, 6,1)
+	GetData(autoLimit, "Local HMI", RW, 52, 1)
+	GetData(autoInterval, "Local HMI", RW, 50, 1)
+	GetData(stdMin, "Local HMI", RECIPE, "models.MIN_MM")	
+	GetData(stdMax, "Local HMI", RECIPE, "models.MAX_MM")
+	
+	// Tampilkan warning
+	warnMin = stdMin - autoLimit
+	warnMax = stdMax + autoLimit
+	SetData(warnMin, "Local HMI", LW, 53, 1)	
+	SetData(warnMax, "Local HMI", LW, 54, 1)
+	isTipKi = 0
+	isTebKi = 0
+	isTipKa = 0
+	isTebKa = 0
+	if valKi > warnMin and valKi < stdMin then
+		isTipKi = 1
+	end if
+	if valKi > stdMax and valKi < warnMax then
+		isTebKi = 1
+	end if
+	if valKa > warnMin and valKa < stdMin then
+		isTipKa = 1
+	end if
+	if valKa > stdMax and valKa < warnMax then
+		isTebKa = 1
+	end if
+	SetData(isTipKi, "Local HMI", LB, 14, 1)
+	SetData(isTebKi, "Local HMI", LB, 15, 1)
+	SetData(isTipKa, "Local HMI", LB, 24, 1)
+	SetData(isTebKa, "Local HMI", LB, 25, 1)
+	
+	// Eksekusi auto koreksi
+	if isAutoCorrectOn == 1 and timer >= autoInterval and medKi <> 0 and medKa <> 0 and autoInterval <> 0 then	
+		SetData(isTrue, "OMRON CJ/CS/CP", H_Bit, 015,1)
+		SetData(isFalse, "OMRON CJ/CS/CP", H_Bit, 015,1)
+		SetData(isFalse, "OMRON CJ/CS/CP", W_BCD, 6, 1)	
+		GetData(stdMid, "Local HMI", RECIPE, "models.STD_MED")	
+		GetData(corrRatio, "Local HMI", RW, 51, 1)	
+		
+		// Periksa jika standar dan rasio kosong
+		if stdMid <> 0 and corrRatio <> 0 then
+			
+			// Periksa jika masuk standar
+			corrKi = 0
+			GetData(isRangeSkipped, "Local HMI", RW_Bit, 64, 1)
+			if (medKi < stdMin or medKi > stdMax) or isRangeSkipped == 1 then
+				// Periksa tipis atau tebal lalu hitung selisih
+				if (medKi - stdMid) > 0 then
+					isKiPos = 1
+					corrKi = medKi - stdMid
+				else if (medKi - stdMid) < 0 then 
+					isKiPos = 0
+					corrKi = stdMid - medKi
+				end if
+			end if		
+			corrKa = 0
+			if (medKa < stdMin or medKa > stdMax) or isRangeSkipped == 1 then
+				if (medKa - stdMid) > 0 then
+					isKaPos = 1
+					corrKa = medKa - stdMid
+				else if (medKa - stdMid) < 0 then 
+					isKaPos = 0
+					corrKa = stdMid - medKa
+				end if
+			end if				
+			
+			// Nolkan jika nilai koreksi melebihi batas 
+			if corrKi > autoLimit then 
+				corrKi = 0 
+			end if
+			if corrKa > autoLimit then 
+				corrKa = 0 
+			end if
+			SetData(corrKi, "Local HMI", LW, 17, 1)
+			SetData(corrKa, "Local HMI", LW, 27, 1)
+			
+			// Eksekusi ke tombol push button jika nilai koreksi ada
+			if corrKi <> 0 then
+				if isKiPos == 1 then
+					tipKi = corrKi * corrRatio / 1000
+					tebKi = 0
+					execKiri(tipKi, tebKi, isTrue, isFalse)
+				else
+					tipKi = 0
+					tebKi = corrKi * corrRatio / 1000
+					execKiri(tipKi, tebKi, isTrue, isFalse)
+				end if
+			end if
+			if corrKa <> 0 then
+				if isKaPos == 1 then
+					tipKa = corrKa * corrRatio / 1000
+					tebKa = 0
+					execKanan(tipKa, tebKa, isTrue, isFalse)
+				else
+					tipKa = 0
+					tebKa = corrKa * corrRatio / 1000
+					execKanan(tipKa, tebKa, isTrue, isFalse)
+				end if
+			end if
+		
+		end if
+	
+	end if	
+
+wend 
+
+end macro_command

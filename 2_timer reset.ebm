@@ -1,0 +1,15 @@
+﻿macro_definition_begin
+    "id": "2"
+    "name": "timer reset"
+    "startup": "false"
+    "periodic": [ "false" ]
+    "interlock": [ "false" ]
+macro_definition_end
+
+macro_command main()
+bool isTrue = 1
+bool isFalse = 0
+SetData(isTrue, "OMRON CJ/CS/CP", H_Bit, 015,1)
+SetData(isFalse, "OMRON CJ/CS/CP", H_Bit, 015,1)
+SetData(isFalse, "OMRON CJ/CS/CP", W_BCD, 6, 1)
+end macro_command
