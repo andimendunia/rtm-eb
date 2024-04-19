@@ -7,4 +7,6 @@
 !/1_timer (OFFLINE SIMULATION ONLY).ebm
 !/2_timer reset.ebm
 !/3_set default.ebm
+!/4_startup.ebm
 !/bahasa.lbl
+

@@ -9,11 +9,13 @@ macro_definition_end
 macro_command main()
 
 short interval = 15
-short ratio = 1000
+short leftRatio = 835
+short rightRatio = 915
 short limit = 150
 
 SetData(interval, "Local HMI", RW, 50, 1)
-SetData(ratio, "Local HMI", RW, 51, 1)
+SetData(leftRatio, "Local HMI", RW, 55, 1)
+SetData(rightRatio, "Local HMI", RW, 56, 1)
 SetData(limit, "Local HMI", RW, 52, 1)
 
 end macro_command

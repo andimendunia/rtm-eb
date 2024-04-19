@@ -1,0 +1,25 @@
+﻿macro_definition_begin
+    "id": "4"
+    "name": "startup"
+    "startup": "true"
+    "periodic": [ "false" ]
+    "interlock": [ "false" ]
+macro_definition_end
+
+macro_command main()
+
+short leftThin = 1
+short leftThick = 1
+short rightThin = 1
+short rightThick = 1
+short thin = 1
+short thick = 1
+
+SetData(leftThin, "OMRON CJ/CS/CP", W, 0, 1)
+SetData(leftThick, "OMRON CJ/CS/CP", W, 1, 1)
+SetData(rightThin, "OMRON CJ/CS/CP", W, 2, 1)
+SetData(rightThick, "OMRON CJ/CS/CP", W, 3, 1)
+SetData(thin, "OMRON CJ/CS/CP", W, 4, 1)
+SetData(thick, "OMRON CJ/CS/CP", W, 5, 1)
+
+end macro_command
