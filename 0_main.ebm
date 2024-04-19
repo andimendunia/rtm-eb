@@ -8,15 +8,11 @@ macro_definition_end
 sub execKiri(unsigned int tipKi, unsigned int tebKi, bool isTrue, bool isFalse)
 	SetData(tipKi, "OMRON CJ/CS/CP", W, 0, 1)
 	SetData(tebKi, "OMRON CJ/CS/CP", W, 1, 1)
-	SetData(isTrue, "OMRON CJ/CS/CP", H_Bit, 000, 1)
-	SetData(isFalse, "OMRON CJ/CS/CP", H_Bit, 000, 1)
 end sub
 
 sub execKanan(unsigned int tipKa, unsigned int tebKa, bool isTrue, bool isFalse)
 	SetData(tipKa, "OMRON CJ/CS/CP", W, 2, 1)
 	SetData(tebKa, "OMRON CJ/CS/CP", W, 3, 1)
-	SetData(isTrue, "OMRON CJ/CS/CP", H_Bit, 000, 1)
-	SetData(isFalse, "OMRON CJ/CS/CP", H_Bit, 000, 1)
 end sub
 
 macro_command main()
@@ -176,10 +172,14 @@ while true
 					tipKi = corrKi * corrRatio / 1000
 					tebKi = 0
 					execKiri(tipKi, tebKi, isTrue, isFalse)
+					SetData(isTrue, "OMRON CJ/CS/CP", H_Bit, 000, 1)
+					SetData(isFalse, "OMRON CJ/CS/CP", H_Bit, 000, 1)
 				else
 					tipKi = 0
 					tebKi = corrKi * corrRatio / 1000
 					execKiri(tipKi, tebKi, isTrue, isFalse)
+					SetData(isTrue, "OMRON CJ/CS/CP", H_Bit, 001, 1)
+					SetData(isFalse, "OMRON CJ/CS/CP", H_Bit, 001, 1)
 				end if
 			end if
 			if corrKa <> 0 then
@@ -187,10 +187,14 @@ while true
 					tipKa = corrKa * corrRatio / 1000
 					tebKa = 0
 					execKanan(tipKa, tebKa, isTrue, isFalse)
+					SetData(isTrue, "OMRON CJ/CS/CP", H_Bit, 002, 1)
+					SetData(isFalse, "OMRON CJ/CS/CP", H_Bit, 002, 1)
 				else
 					tipKa = 0
 					tebKa = corrKa * corrRatio / 1000
 					execKanan(tipKa, tebKa, isTrue, isFalse)
+					SetData(isTrue, "OMRON CJ/CS/CP", H_Bit, 003, 1)
+					SetData(isFalse, "OMRON CJ/CS/CP", H_Bit, 003, 1)
 				end if
 			end if
 		
