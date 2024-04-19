@@ -18,12 +18,13 @@ end sub
 macro_command main()
 
 // sampling harus cocok dengan jumlah isi array datKi dan datKa
-short sampling = 5, datKi[5], datKa[5]
-short pointer = 1, medKi = 0, medKa = 0
+short sampling = 0, datKi[20], datKa[20]
+short pointer = 0, medKi = 0, medKa = 0
 short pointKi = 0, pointKa = 0, valKi = 0, valKa = 0, limit = 600 
 short isAutoCorrectOn = 0, autoInterval = 0
 short existCount = 0, existSampling = 10
-short stdMid = 0, stdMin = 0, stdMax = 0, corrRatio = 0
+short stdMid = 0, stdMin = 0, stdMax = 0
+short corrRatioKi = 0, corrRatioKa = 0
 short warnMin = 0, warnMax = 0
 unsigned int corrKi = 0, corrKa = 0, timeKi = 0, timeKa = 0
 unsigned int tebKi = 0, tebKa = 0, tipKi = 0, tipKa = 0
@@ -39,10 +40,11 @@ while true
 
 	// Pindahkan pointer
 	GetData(pointer, "Local HMI", LW, 70, 1)
-	if pointer >= sampling then
-		pointer = 1
-	else
+	GetData(sampling, "Local HMI", RW, 51, 1)
+	if sampling > 0 and pointer < sampling then
 		pointer = pointer + 1
+	else
+	 	pointer = 0
 	end if
 	SetData(pointer, "Local HMI", LW, 70, 1)
 	
@@ -122,15 +124,16 @@ while true
 	SetData(isTebKa, "Local HMI", LB, 25, 1)
 	
 	// Eksekusi auto koreksi
-	if isAutoCorrectOn == 1 and timer >= autoInterval and medKi <> 0 and medKa <> 0 and autoInterval <> 0 then	
+	if isAutoCorrectOn == 1 and timer >= autoInterval and medKi > 0 and medKa > 0 and autoInterval > 0 then	
 		SetData(isTrue, "OMRON CJ/CS/CP", H_Bit, 015,1)
 		SetData(isFalse, "OMRON CJ/CS/CP", H_Bit, 015,1)
 		SetData(isFalse, "OMRON CJ/CS/CP", W_BCD, 6, 1)	
 		GetData(stdMid, "Local HMI", RECIPE, "models.STD_MED")	
-		GetData(corrRatio, "Local HMI", RW, 51, 1)	
+		GetData(corrRatioKi, "Local HMI", RW, 55, 1)	
+		GetData(corrRatioKa, "Local HMI", RW, 56, 1)
 		
-		// Periksa jika standar dan rasio kosong
-		if stdMid <> 0 and corrRatio <> 0 then
+		// Periksa jika standar dan rasio kiri dan kanan kosong
+		if stdMid > 0 and corrRatioKi > 0 and corrRatioKa > 0 then
 			
 			// Periksa jika masuk standar
 			corrKi = 0
@@ -167,31 +170,31 @@ while true
 			SetData(corrKa, "Local HMI", LW, 27, 1)
 			
 			// Eksekusi ke tombol push button jika nilai koreksi ada
-			if corrKi <> 0 then
+			if corrKi > 0 then
 				if isKiPos == 1 then
-					tipKi = corrKi * corrRatio / 1000
+					tipKi = corrKi * corrRatioKi / 1000
 					tebKi = 0
 					execKiri(tipKi, tebKi, isTrue, isFalse)
 					SetData(isTrue, "OMRON CJ/CS/CP", H_Bit, 000, 1)
 					SetData(isFalse, "OMRON CJ/CS/CP", H_Bit, 000, 1)
 				else
 					tipKi = 0
-					tebKi = corrKi * corrRatio / 1000
+					tebKi = corrKi * corrRatioKi / 1000
 					execKiri(tipKi, tebKi, isTrue, isFalse)
 					SetData(isTrue, "OMRON CJ/CS/CP", H_Bit, 001, 1)
 					SetData(isFalse, "OMRON CJ/CS/CP", H_Bit, 001, 1)
 				end if
 			end if
-			if corrKa <> 0 then
+			if corrKa > 0 then
 				if isKaPos == 1 then
-					tipKa = corrKa * corrRatio / 1000
+					tipKa = corrKa * corrRatioKa / 1000
 					tebKa = 0
 					execKanan(tipKa, tebKa, isTrue, isFalse)
 					SetData(isTrue, "OMRON CJ/CS/CP", H_Bit, 002, 1)
 					SetData(isFalse, "OMRON CJ/CS/CP", H_Bit, 002, 1)
 				else
 					tipKa = 0
-					tebKa = corrKa * corrRatio / 1000
+					tebKa = corrKa * corrRatioKa / 1000
 					execKanan(tipKa, tebKa, isTrue, isFalse)
 					SetData(isTrue, "OMRON CJ/CS/CP", H_Bit, 003, 1)
 					SetData(isFalse, "OMRON CJ/CS/CP", H_Bit, 003, 1)
