@@ -9,7 +9,7 @@ macro_definition_end
 macro_command main()
 
 short interval = 15
-short sampling = 150
+short sampling = 8
 short limit = 150
 short leftRatio = 835
 short rightRatio = 915
