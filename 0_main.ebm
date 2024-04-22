@@ -68,6 +68,17 @@ while true
 	SetData(valKi, "Local HMI", LW, pointKi, 1)
 	SetData(valKa, "Local HMI", LW, pointKa, 1)
 	
+	// Kendali sampling
+	if pointer == 0 then
+		if valKi > 0 or valKa > 0 then
+			// Mulai sampling (release) jika ada data
+			SetData(isFalse, "Local HMI", LB, 62, 1)
+		else
+			// Hentikan sampling (hold) jika tidak ada data
+			SetData(isTrue, "Local HMI", LB, 62, 1)
+		end if
+	end if	
+	
 	// Hitung median
 	GetData(datKi[0], "Local HMI", LW, 100, sampling)
 	GetData(datKa[0], "Local HMI", LW, 200, sampling)
@@ -76,7 +87,7 @@ while true
 	SetData(medKi, "Local HMI", LW, 10, 1)
 	SetData(medKa, "Local HMI", LW, 20, 1)
 	
-	// Matikan mode auto jika tidak ada data
+	// Matikan mode auto  jika tidak ada data
 	GetData(isAutoCorrectOn, "OMRON CJ/CS/CP", H_Bit, 10000,1)
 	if medKi == 0 and medKa == 0 and isAutoCorrectOn == 1 then
 		GetData(existCount, "Local HMI", LW, 71, 1)
