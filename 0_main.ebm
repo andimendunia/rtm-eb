@@ -22,9 +22,10 @@ short sampling = 0, datKi[20], datKa[20]
 short pointer = 0, medKi = 0, medKa = 0
 short pointKi = 0, pointKa = 0, valKi = 0, valKa = 0, limit = 600 
 short isAutoCorrectOn = 0, autoInterval = 0
-short existCount = 0, existSampling = 10
+short existCount = 0, existSampling = 20
 short stdMid = 0, stdMin = 0, stdMax = 0
-short corrRatioKi = 0, corrRatioKa = 0
+short corrRatioTipKi = 0, corrRatioTipKa = 0
+short corrRatioTebKi = 0, corrRatioTebKa = 0
 short warnMin = 0, warnMax = 0
 unsigned int corrKi = 0, corrKa = 0, timeKi = 0, timeKa = 0
 unsigned int tebKi = 0, tebKa = 0, tipKi = 0, tipKa = 0
@@ -32,6 +33,9 @@ bool isKiPos = 0, isKaPos = 0, isTrue = 1, isFalse = 0, isRangeSkipped = 0
 unsigned int timer = 0
 short autoLimit = 0
 bool isTipKi = 0, isTipKa = 0, isTebKi = 0, isTebKa = 0
+short localSecond = 0, localMinute = 0, localHour = 0, localDay = 0, localMonth = 0, localYear = 0
+short secondKi = 0, minuteKi = 0, hourKi = 0, dayKi = 0, monthKi = 0, yearKi= 0
+short secondKa = 0, minuteKa = 0, hourKa = 0, dayKa = 0, monthKa = 0, yearKa= 0
 
 existCount = existSampling
 SetData(existCount, "Local HMI", LW, 71, 1)
@@ -105,8 +109,8 @@ while true
 	GetData(timer, "OMRON CJ/CS/CP", W_BCD, 6,1)
 	GetData(autoLimit, "Local HMI", RW, 52, 1)
 	GetData(autoInterval, "Local HMI", RW, 50, 1)
-	GetData(stdMin, "Local HMI", RECIPE, "models.MIN_MM")	
-	GetData(stdMax, "Local HMI", RECIPE, "models.MAX_MM")
+	GetData(stdMin, "Local HMI", RECIPE, "models.STD_MIN")	
+	GetData(stdMax, "Local HMI", RECIPE, "models.STD_MAX")
 	
 	// Tampilkan warning
 	warnMin = stdMin - autoLimit
@@ -139,12 +143,14 @@ while true
 		SetData(isTrue, "OMRON CJ/CS/CP", H_Bit, 015,1)
 		SetData(isFalse, "OMRON CJ/CS/CP", H_Bit, 015,1)
 		SetData(isFalse, "OMRON CJ/CS/CP", W_BCD, 6, 1)	
-		GetData(stdMid, "Local HMI", RECIPE, "models.STD_MED")	
-		GetData(corrRatioKi, "Local HMI", RW, 55, 1)	
-		GetData(corrRatioKa, "Local HMI", RW, 56, 1)
+		GetData(stdMid, "Local HMI", RECIPE, "models.STD_MID")	
+		GetData(corrRatioTipKi, "Local HMI", RW, 55, 1)	
+		GetData(corrRatioTipKa, "Local HMI", RW, 56, 1)
+		GetData(corrRatioTebKi, "Local HMI", RW, 57, 1)	
+		GetData(corrRatioTebKa, "Local HMI", RW, 58, 1)
 		
-		// Periksa jika standar dan rasio kiri dan kanan kosong
-		if stdMid > 0 and corrRatioKi > 0 and corrRatioKa > 0 then
+		// Periksa jika standar dan rasio kosong
+		if stdMid > 0 and corrRatioTipKi > 0 and corrRatioTipKa > 0 and corrRatioTebKi > 0 and corrRatioTebKa > 0 then
 			
 			// Periksa jika masuk standar
 			corrKi = 0
@@ -180,36 +186,63 @@ while true
 			SetData(corrKi, "Local HMI", LW, 17, 1)
 			SetData(corrKa, "Local HMI", LW, 27, 1)
 			
+			if corrKi > 0 or corrKa > 0 then
+			// get local time
+			GetData(localSecond, "Local HMI", LW, 9017, 1)
+			GetData(localMinute, "Local HMI", LW, 9018, 1)
+			GetData(localHour, "Local HMI", LW, 9019, 1)
+			GetData(localDay, "Local HMI", LW, 9020, 1)
+			GetData(localMonth, "Local HMI", LW, 9021, 1)
+			GetData(localYear, "Local HMI", LW, 9022, 1)
+			end if
+			
 			// Eksekusi ke tombol push button jika nilai koreksi ada
 			if corrKi > 0 then
 				if isKiPos == 1 then
-					tipKi = corrKi * corrRatioKi / 1000
+					tipKi = corrKi * corrRatioTipKi / 1000
 					tebKi = 0
 					execKiri(tipKi, tebKi, isTrue, isFalse)
 					SetData(isTrue, "OMRON CJ/CS/CP", H_Bit, 000, 1)
 					SetData(isFalse, "OMRON CJ/CS/CP", H_Bit, 000, 1)
 				else
 					tipKi = 0
-					tebKi = corrKi * corrRatioKi / 1000
+					tebKi = corrKi * corrRatioTebKi / 1000
 					execKiri(tipKi, tebKi, isTrue, isFalse)
 					SetData(isTrue, "OMRON CJ/CS/CP", H_Bit, 001, 1)
 					SetData(isFalse, "OMRON CJ/CS/CP", H_Bit, 001, 1)
 				end if
+				// ambil waktu lokal year, month, day, hour, minute, taro di alamat buatan
+				// Set ke alamat buatan kiri
+				SetData(secondKi, "Local HMI", LW, 911, 1)
+				SetData(minuteKi, "Local HMI", LW, 912, 1)
+				SetData(hourKi, "Local HMI", LW, 913, 1)
+				SetData(dayKi, "Local HMI", LW, 914, 1)
+				SetData(monthKi, "Local HMI", LW, 915, 1)
+				SetData(yearKi, "Local HMI", LW, 916, 1)		
 			end if
+			
 			if corrKa > 0 then
 				if isKaPos == 1 then
-					tipKa = corrKa * corrRatioKa / 1000
+					tipKa = corrKa * corrRatioTipKa / 1000
 					tebKa = 0
 					execKanan(tipKa, tebKa, isTrue, isFalse)
 					SetData(isTrue, "OMRON CJ/CS/CP", H_Bit, 002, 1)
 					SetData(isFalse, "OMRON CJ/CS/CP", H_Bit, 002, 1)
 				else
 					tipKa = 0
-					tebKa = corrKa * corrRatioKa / 1000
+					tebKa = corrKa * corrRatioTebKa / 1000
 					execKanan(tipKa, tebKa, isTrue, isFalse)
 					SetData(isTrue, "OMRON CJ/CS/CP", H_Bit, 003, 1)
 					SetData(isFalse, "OMRON CJ/CS/CP", H_Bit, 003, 1)
 				end if
+				// ambil waktu lokal year, month, day, hour, minute, taro di alamat buatan
+				// Set ke alamat buatan	kanan
+				SetData(secondKa, "Local HMI", LW, 921, 1)
+				SetData(minuteKa, "Local HMI", LW, 922, 1)
+				SetData(hourKa, "Local HMI", LW, 923, 1)
+				SetData(dayKa, "Local HMI", LW, 924, 1)
+				SetData(monthKa, "Local HMI", LW, 925, 1)
+				SetData(yearKa, "Local HMI", LW, 926, 1)
 			end if
 		
 		end if
