@@ -8,18 +8,20 @@ macro_definition_end
 
 macro_command main()
 
-short interval = 13
+short timeInterval = 15
+short timeDelay = 15
 short sampling = 5
-short limit = 150
+short limit = 10
 short thinLeftRatio = 300
 short thinRightRatio = 300
 short thickLeftRatio = 150
 short thickRightRatio = 150
 short isTrue = 1
 
-SetData(interval, "Local HMI", RW, 50, 1)
+SetData(timeInterval, "Local HMI", RW, 50, 1)
 SetData(sampling, "Local HMI", RW, 51, 1)
 SetData(limit, "Local HMI", RW, 52, 1)
+SetData(timeDelay, "Local HMI", RW, 53, 1)
 SetData(thinLeftRatio, "Local HMI", RW, 55, 1)
 SetData(thinRightRatio, "Local HMI", RW, 56, 1)
 SetData(thickLeftRatio, "Local HMI", RW, 57, 1)

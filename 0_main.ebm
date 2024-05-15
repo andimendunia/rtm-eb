@@ -21,21 +21,19 @@ macro_command main()
 short sampling = 0, datKi[20], datKa[20]
 short pointer = 0, medKi = 0, medKa = 0
 short pointKi = 0, pointKa = 0, valKi = 0, valKa = 0, limit = 600 
-short isAutoCorrectOn = 0, autoInterval = 0
-short existCount = 0, existSampling = 20
+short isAutoCorrectOn = 0, corrInterval = 0, corrLimit = 0
+short existCount = 0, existSampling = 30
 short stdMid = 0, stdMin = 0, stdMax = 0
 short corrRatioTipKi = 0, corrRatioTipKa = 0
 short corrRatioTebKi = 0, corrRatioTebKa = 0
-short warnMin = 0, warnMax = 0
+short corrMin = 0, corrMax = 0
 unsigned int corrKi = 0, corrKa = 0, timeKi = 0, timeKa = 0
 unsigned int tebKi = 0, tebKa = 0, tipKi = 0, tipKa = 0
 bool isKiPos = 0, isKaPos = 0, isTrue = 1, isFalse = 0, isRangeSkipped = 0
 unsigned int timer = 0
-short autoLimit = 0
 bool isTipKi = 0, isTipKa = 0, isTebKi = 0, isTebKa = 0
-short localSecond = 0, localMinute = 0, localHour = 0, localDay = 0, localMonth = 0, localYear = 0
-short secondKi = 0, minuteKi = 0, hourKi = 0, dayKi = 0, monthKi = 0, yearKi= 0
-short secondKa = 0, minuteKa = 0, hourKa = 0, dayKa = 0, monthKa = 0, yearKa= 0
+short systemTime = 0, stKi = 0, stKa = 0
+short corrDelay = 0, isCorrDelayDone = 0
 
 existCount = existSampling
 SetData(existCount, "Local HMI", LW, 71, 1)
@@ -107,39 +105,52 @@ while true
 	
 	// Ambil parameter
 	GetData(timer, "OMRON CJ/CS/CP", W_BCD, 6,1)
-	GetData(autoLimit, "Local HMI", RW, 52, 1)
-	GetData(autoInterval, "Local HMI", RW, 50, 1)
+	GetData(corrLimit, "Local HMI", RW, 52, 1)
+	GetData(corrInterval, "Local HMI", RW, 50, 1)
 	GetData(stdMin, "Local HMI", RECIPE, "models.STD_MIN")	
 	GetData(stdMax, "Local HMI", RECIPE, "models.STD_MAX")
 	
-	// Tampilkan warning
-	warnMin = stdMin - autoLimit
-	warnMax = stdMax + autoLimit
-	SetData(warnMin, "Local HMI", LW, 53, 1)	
-	SetData(warnMax, "Local HMI", LW, 54, 1)
+	// Tentukan rentang koreksi
+	corrMin = (stdMin - (corrLimit * stdMin / 100))
+	corrMax = (stdMax + (corrLimit * stdMax / 100))
+	SetData(corrMin, "Local HMI", LW, 53, 1)	
+	SetData(corrMax, "Local HMI", LW, 54, 1)
 	isTipKi = 0
 	isTebKi = 0
 	isTipKa = 0
 	isTebKa = 0
-	if valKi > warnMin and valKi < stdMin then
+	if valKi > corrMin and valKi < stdMin then
 		isTipKi = 1
 	end if
-	if valKi > stdMax and valKi < warnMax then
+	if valKi > stdMax and valKi < corrMax then
 		isTebKi = 1
 	end if
-	if valKa > warnMin and valKa < stdMin then
+	if valKa > corrMin and valKa < stdMin then
 		isTipKa = 1
 	end if
-	if valKa > stdMax and valKa < warnMax then
+	if valKa > stdMax and valKa < corrMax then
 		isTebKa = 1
 	end if
 	SetData(isTipKi, "Local HMI", LB, 14, 1)
 	SetData(isTebKi, "Local HMI", LB, 15, 1)
 	SetData(isTipKa, "Local HMI", LB, 24, 1)
 	SetData(isTebKa, "Local HMI", LB, 25, 1)
+	GetData(corrDelay, "Local HMI", RW, 53, 1)
 	
-	// Eksekusi auto koreksi
-	if isAutoCorrectOn == 1 and timer >= autoInterval and medKi > 0 and medKa > 0 and autoInterval > 0 then	
+	// Cek delay sebelum auto koreksi eksekusi
+	if timer >= corrDelay and isAutoCorrectOn == 1 and isCorrDelayDone == 0 then
+		isCorrDelayDone = 1	
+		SetData(isTrue, "OMRON CJ/CS/CP", H_Bit, 015,1)
+		SetData(isFalse, "OMRON CJ/CS/CP", H_Bit, 015,1)
+		SetData(isFalse, "OMRON CJ/CS/CP", W_BCD, 6, 1)	
+	end if
+	
+	if isAutoCorrectOn == 0 then
+		isCorrDelayDone = 0	
+	end if
+	
+	// Eksekusi auto koreksi jika auto koreksi on, interval tercapai, medki, medka, dan interval tidak kosong
+	if isAutoCorrectOn == 1 and timer >= corrInterval and medKi > 0 and medKa > 0 and corrInterval > 0 and isCorrDelayDone == 1 then	
 		SetData(isTrue, "OMRON CJ/CS/CP", H_Bit, 015,1)
 		SetData(isFalse, "OMRON CJ/CS/CP", H_Bit, 015,1)
 		SetData(isFalse, "OMRON CJ/CS/CP", W_BCD, 6, 1)	
@@ -148,6 +159,7 @@ while true
 		GetData(corrRatioTipKa, "Local HMI", RW, 56, 1)
 		GetData(corrRatioTebKi, "Local HMI", RW, 57, 1)	
 		GetData(corrRatioTebKa, "Local HMI", RW, 58, 1)
+
 		
 		// Periksa jika standar dan rasio kosong
 		if stdMid > 0 and corrRatioTipKi > 0 and corrRatioTipKa > 0 and corrRatioTebKi > 0 and corrRatioTebKa > 0 then
@@ -176,24 +188,19 @@ while true
 				end if
 			end if				
 			
-			// Nolkan jika nilai koreksi melebihi batas 
-			if corrKi > autoLimit then 
+			// Nolkan jika nilai koreksi melebihi rentang 
+			if medKi < corrMin or medKi > corrMax then 
 				corrKi = 0 
 			end if
-			if corrKa > autoLimit then 
+			if medKa < corrMin or medKa > corrMax then 
 				corrKa = 0 
 			end if
 			SetData(corrKi, "Local HMI", LW, 17, 1)
 			SetData(corrKa, "Local HMI", LW, 27, 1)
 			
 			if corrKi > 0 or corrKa > 0 then
-			// get local time
-			GetData(localSecond, "Local HMI", LW, 9017, 1)
-			GetData(localMinute, "Local HMI", LW, 9018, 1)
-			GetData(localHour, "Local HMI", LW, 9019, 1)
-			GetData(localDay, "Local HMI", LW, 9020, 1)
-			GetData(localMonth, "Local HMI", LW, 9021, 1)
-			GetData(localYear, "Local HMI", LW, 9022, 1)
+			// get sytem time
+			GetData(systemTime, "Local HMI", LW, 9030, 1)
 			end if
 			
 			// Eksekusi ke tombol push button jika nilai koreksi ada
@@ -211,14 +218,8 @@ while true
 					SetData(isTrue, "OMRON CJ/CS/CP", H_Bit, 001, 1)
 					SetData(isFalse, "OMRON CJ/CS/CP", H_Bit, 001, 1)
 				end if
-				// ambil waktu lokal year, month, day, hour, minute, taro di alamat buatan
-				// Set ke alamat buatan kiri
-				SetData(secondKi, "Local HMI", LW, 911, 1)
-				SetData(minuteKi, "Local HMI", LW, 912, 1)
-				SetData(hourKi, "Local HMI", LW, 913, 1)
-				SetData(dayKi, "Local HMI", LW, 914, 1)
-				SetData(monthKi, "Local HMI", LW, 915, 1)
-				SetData(yearKi, "Local HMI", LW, 916, 1)		
+				// ambil waktu sistem, taro di alamat buatan kiri
+				SetData(systemTime, "Local HMI", LW, 19, 1)	
 			end if
 			
 			if corrKa > 0 then
@@ -235,14 +236,8 @@ while true
 					SetData(isTrue, "OMRON CJ/CS/CP", H_Bit, 003, 1)
 					SetData(isFalse, "OMRON CJ/CS/CP", H_Bit, 003, 1)
 				end if
-				// ambil waktu lokal year, month, day, hour, minute, taro di alamat buatan
-				// Set ke alamat buatan	kanan
-				SetData(secondKa, "Local HMI", LW, 921, 1)
-				SetData(minuteKa, "Local HMI", LW, 922, 1)
-				SetData(hourKa, "Local HMI", LW, 923, 1)
-				SetData(dayKa, "Local HMI", LW, 924, 1)
-				SetData(monthKa, "Local HMI", LW, 925, 1)
-				SetData(yearKa, "Local HMI", LW, 926, 1)
+				// ambil waktu sistem, taro di alamat buatan kanan
+				SetData(systemTime, "Local HMI", LW, 29, 1)	
 			end if
 		
 		end if
