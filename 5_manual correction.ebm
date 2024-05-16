@@ -1,0 +1,82 @@
+﻿macro_definition_begin
+    "id": "5"
+    "name": "manual correction"
+    "startup": "false"
+    "periodic": [ "false" ]
+    "interlock": [ "false" ]
+macro_definition_end
+sub execKiri(unsigned int tipKi, unsigned int tebKi)
+	SetData(tipKi, "OMRON CJ/CS/CP", W, 0, 1)
+	SetData(tebKi, "OMRON CJ/CS/CP", W, 1, 1)
+end sub
+
+sub execKanan(unsigned int tipKa, unsigned int tebKa)
+	SetData(tipKa, "OMRON CJ/CS/CP", W, 2, 1)
+	SetData(tebKa, "OMRON CJ/CS/CP", W, 3, 1)
+end sub
+
+macro_command main()
+
+	short action = 0, tipTime = 0, tebTime = 0
+	bool isTrue = 1, isFalse = 0
+	unsigned int tipKi = 0, tebKi = 0, tipKa = 0, tebKa = 0
+	
+	GetData(action, "Local HMI", LW, 72, 1)
+	GetData(tipTime, "Local HMI", RW, 60, 1)
+	GetData(tebTime, "Local HMI", RW, 61, 1)
+	
+	if action == 1 then
+		// tipki
+		tipKi = tipTime
+		tebKi = 0
+		execKiri(tipKi, tebKi)
+		SetData(isTrue, "OMRON CJ/CS/CP", H_Bit, 000, 1)
+		SetData(isFalse, "OMRON CJ/CS/CP", H_Bit, 000, 1)
+	else if action == 2 then
+		// tebki
+		tipKi = 0
+		tebKi = tebTime
+		execKiri(tipKi, tebKi)
+		SetData(isTrue, "OMRON CJ/CS/CP", H_Bit, 001, 1)
+		SetData(isFalse, "OMRON CJ/CS/CP", H_Bit, 001, 1)
+	else if action == 3 then
+		// tipka
+		tipKa = tipTime
+		tebKa = 0
+		execKanan(tipKa, tebKa)
+		SetData(isTrue, "OMRON CJ/CS/CP", H_Bit, 002, 1)
+		SetData(isFalse, "OMRON CJ/CS/CP", H_Bit, 002, 1)
+	else if action == 4 then
+		// tebka
+		tipKa = 0
+		tebKa = tebTime
+		execKanan(tipKa, tebKa)
+		SetData(isTrue, "OMRON CJ/CS/CP", H_Bit, 003, 1)
+		SetData(isFalse, "OMRON CJ/CS/CP", H_Bit, 003, 1)
+	else if action == 5 then
+		// tip
+		tipKi = tipTime
+		tipKa = tipTime
+		tebKi = 0
+		tebKa = 0
+		execKiri(tipKi, tebKi)
+		SetData(isTrue, "OMRON CJ/CS/CP", H_Bit, 000, 1)
+		SetData(isFalse, "OMRON CJ/CS/CP", H_Bit, 000, 1)
+		execKanan(tipKa, tebKa)
+		SetData(isTrue, "OMRON CJ/CS/CP", H_Bit, 002, 1)
+		SetData(isFalse, "OMRON CJ/CS/CP", H_Bit, 002, 1)
+	else if action == 6 then
+		// teb
+		tipKi = 0
+		tipKa = 0
+		tebKi = tebTime
+		tebKa = tebTime
+		execKiri(tipKi, tebKi)
+		SetData(isTrue, "OMRON CJ/CS/CP", H_Bit, 001, 1)
+		SetData(isFalse, "OMRON CJ/CS/CP", H_Bit, 001, 1)
+		execKanan(tipKa, tebKa)
+		SetData(isTrue, "OMRON CJ/CS/CP", H_Bit, 003, 1)
+		SetData(isFalse, "OMRON CJ/CS/CP", H_Bit, 003, 1)
+	end if
+
+end macro_command

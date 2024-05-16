@@ -2,7 +2,7 @@
     "id": "1"
     "name": "timer (OFFLINE SIMULATION ONLY)"
     "startup": "false"
-    "periodic": [ "false" ]
+    "periodic": [ "true", "10" ]
     "interlock": [ "false" ]
 macro_definition_end
 

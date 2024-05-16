@@ -145,6 +145,10 @@ while true
 		SetData(isFalse, "OMRON CJ/CS/CP", W_BCD, 6, 1)	
 	end if
 	
+	if corrDelay == 0 then
+		isCorrDelayDone = 1	
+	end if
+	
 	if isAutoCorrectOn == 0 then
 		isCorrDelayDone = 0	
 	end if
