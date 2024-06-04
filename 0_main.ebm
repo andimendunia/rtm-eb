@@ -19,7 +19,8 @@ macro_command main()
 
 // sampling harus cocok dengan jumlah isi array datKi dan datKa
 short sampling = 0, datKi[20], datKa[20]
-short pointer = 0, medKi = 0, medKa = 0
+short pointer = 0, medKi = 0, medKa = 0, prevMedKi = 0, prevMedKa = 0
+float slopeKi = 0, slopeKa = 0
 short pointKi = 0, pointKa = 0, valKi = 0, valKa = 0, limit = 600 
 short isAutoCorrectOn = 0, corrInterval = 0, corrLimit = 0
 short existCount = 0, existSampling = 30
@@ -29,7 +30,7 @@ short corrRatioTebKi = 0, corrRatioTebKa = 0
 short corrMin = 0, corrMax = 0
 unsigned int corrKi = 0, corrKa = 0, timeKi = 0, timeKa = 0
 unsigned int tebKi = 0, tebKa = 0, tipKi = 0, tipKa = 0
-bool isKiPos = 0, isKaPos = 0, isTrue = 1, isFalse = 0, isRangeSkipped = 0
+bool isKiPos = 0, isKaPos = 0, isTrue = 1, isFalse = 0, isRangeSkipped = 0, isSlopeFactorUsed = 0
 unsigned int timer = 0
 bool isTipKi = 0, isTipKa = 0, isTebKi = 0, isTebKa = 0
 short systemTime = 0, stKi = 0, stKa = 0
@@ -84,6 +85,8 @@ while true
 	// Hitung median
 	GetData(datKi[0], "Local HMI", LW, 100, sampling)
 	GetData(datKa[0], "Local HMI", LW, 200, sampling)
+	prevMedKi = medKi
+	prevMedKa = medKa
 	MEDIAN(datKi[0], medKi, sampling)
 	MEDIAN(datKa[0], medKa, sampling)
 	SetData(medKi, "Local HMI", LW, 10, 1)
@@ -207,10 +210,22 @@ while true
 			GetData(systemTime, "Local HMI", LW, 9030, 1)
 			end if
 			
+			GetData(isSlopeFactorUsed, "Local HMI", RW_Bit, 65, 1)
+			
 			// Eksekusi ke tombol push button jika nilai koreksi ada
 			if corrKi > 0 then
+			
+				// Hitung Slope Factor Kiri
+				slopeKi = 1
+				if isSlopeFactorUsed == 1 then
+					slopeKi = (stdMid - medKi) / (stdMid - prevMedKi)
+					if slopeKi <= 0 then
+						slopeKi = 0.5
+					end if
+				end if
+					
 				if isKiPos == 1 then
-					tipKi = corrKi * corrRatioTipKi / 1000
+					tipKi = corrKi * corrRatioTipKi * slopeKi / 1000
 					tebKi = 0
 					execKiri(tipKi, tebKi, isTrue, isFalse)
 					SetData(isTrue, "OMRON CJ/CS/CP", H_Bit, 000, 1)
@@ -227,8 +242,18 @@ while true
 			end if
 			
 			if corrKa > 0 then
+			
+				// Hitung Slope Factor Kanan
+				slopeKa = 1
+				if isSlopeFactorUsed == 1 then
+					slopeKa = (stdMid - medKa) / (stdMid - prevMedKa)
+					if slopeKa <= 0 then
+						slopeKa = 0.5
+					end if
+				end if
+				
 				if isKaPos == 1 then
-					tipKa = corrKa * corrRatioTipKa / 1000
+					tipKa = corrKa * corrRatioTipKa * slopeKa / 1000
 					tebKa = 0
 					execKanan(tipKa, tebKa, isTrue, isFalse)
 					SetData(isTrue, "OMRON CJ/CS/CP", H_Bit, 002, 1)
